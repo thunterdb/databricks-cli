@@ -28,6 +28,7 @@
 A common class to be used by client of different APIs
 """
 
+import asyncio
 import base64
 import json
 import warnings
@@ -35,11 +36,19 @@ import requests
 import ssl
 import copy
 import pprint
+import click
 
 from . import version
 
 from requests.adapters import HTTPAdapter
 from six.moves.urllib.parse import urlparse
+
+try:
+    import httpx
+    click.echo("Asynchronous API is available")
+except ImportError:
+    click.echo("httpx module not available. Only the sychnronous API is available")
+    httpx = None
 
 try:
     from requests.packages.urllib3.poolmanager import PoolManager
@@ -72,6 +81,12 @@ class ApiClient(object):
 
         self.session = requests.Session()
         self.session.mount('https://', TlsV1HttpAdapter())
+        if httpx:
+            self.session_async = httpx.AsyncClient()
+            # No mounting on the async client
+            #self.session_async.mount('https://', TlsV1HttpAdapter())
+        else:
+            self.session_async = None
 
         parsed_url = urlparse(host)
         scheme = parsed_url.scheme
@@ -99,7 +114,7 @@ class ApiClient(object):
 
     # helper functions starting here
 
-    def perform_query(self, method, path, data = {}, headers = None, timeout_seconds=None):
+    async def perform_query_async(self, method, path, data = {}, headers = None, timeout_seconds=None):
         """set up connection and perform query"""
         if headers is None:
             headers = self.default_headers
@@ -112,10 +127,10 @@ class ApiClient(object):
             warnings.simplefilter("ignore", exceptions.InsecureRequestWarning)
             if method == 'GET':
                 translated_data = {k: _translate_boolean_to_query_param(data[k]) for k in data}
-                resp = self.session.request(method, self.url + path, params = translated_data,
+                resp = await self.session_async.request(method, self.url + path, params = translated_data,
                     verify = self.verify, headers = headers, timeout = timeout_seconds)
             else:
-                resp = self.session.request(method, self.url + path, data = json.dumps(data),
+                resp = await self.session_async.request(method, self.url + path, data = json.dumps(data),
                     verify = self.verify, headers = headers, timeout = timeout_seconds)
         try:
             resp.raise_for_status()
@@ -128,6 +143,16 @@ class ApiClient(object):
                 pass
             raise requests.exceptions.HTTPError(message, response=e.response)
         return resp.json()
+
+
+    def perform_query(self, method, path, data = {}, headers = None, timeout_seconds=None):
+        """set up connection and perform query"""
+        loop = asyncio.get_event_loop()
+        event = self.perform_query_async(method, path, data, headers, timeout_seconds)
+        print("event", event)
+        res = loop.run_until_complete(event)
+        loop.close()
+        return res
 
 
 def _translate_boolean_to_query_param(value):

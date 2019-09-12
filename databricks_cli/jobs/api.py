@@ -20,7 +20,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from databricks_cli.sdk import JobsService
+from databricks_cli.sdk import JobsService, AsyncJobsService
 
 
 class JobsApi(object):
@@ -52,5 +52,37 @@ class JobsApi(object):
 
     def _list_jobs_by_name(self, name, headers=None):
         jobs = self.list_jobs(headers=headers)['jobs']
+        result = list(filter(lambda job: job['settings']['name'] == name, jobs))
+        return result
+
+class AsyncJobsApi(object):
+    def __init__(self, api_client):
+        self.client = AsyncJobsService(api_client)
+
+    async def create_job(self, json, headers=None):
+        return self.client.client.perform_query_async('POST', '/jobs/create', data=json, headers=headers)
+
+    async def list_jobs(self, headers=None):
+        resp = await self.client.list_jobs(headers=headers)
+        if 'jobs' not in resp:
+            resp['jobs'] = []
+        return resp
+
+    async def delete_job(self, job_id, headers=None):
+        return self.client.delete_job(job_id, headers=headers)
+
+    async def get_job(self, job_id, headers=None):
+        return self.client.get_job(job_id, headers=headers)
+
+    async def reset_job(self, json, headers=None):
+        return self.client.client.perform_query_async('POST', '/jobs/reset', data=json, headers=headers)
+
+    async def run_now(self, job_id, jar_params, notebook_params, python_params, spark_submit_params,
+                headers=None):
+        return self.client.run_now(job_id, jar_params, notebook_params, python_params,
+                                   spark_submit_params, headers=headers)
+
+    async def _list_jobs_by_name(self, name, headers=None):
+        jobs = await self.list_jobs(headers=headers)['jobs']
         result = list(filter(lambda job: job['settings']['name'] == name, jobs))
         return result

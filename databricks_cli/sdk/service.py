@@ -23,6 +23,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import asyncio
+
 class JobsService(object):
     def __init__(self, client):
         self.client = client
@@ -201,6 +203,199 @@ class JobsService(object):
         if views_to_export is not None:
             _data['views_to_export'] = views_to_export
         return self.client.perform_query('GET', '/jobs/runs/export', data=_data, headers=headers)
+
+
+class AsyncJobsService(object):
+    def __init__(self, client):
+        self.client = client
+
+    @asyncio.coroutine
+    def create_job(self, name=None, existing_cluster_id=None, new_cluster=None, libraries=None,
+                   email_notifications=None, timeout_seconds=None, max_retries=None,
+                   min_retry_interval_millis=None, retry_on_timeout=None, schedule=None,
+                   notebook_task=None, spark_jar_task=None, spark_python_task=None,
+                   spark_submit_task=None, max_concurrent_runs=None, headers=None):
+        _data = {}
+        if name is not None:
+            _data['name'] = name
+        if existing_cluster_id is not None:
+            _data['existing_cluster_id'] = existing_cluster_id
+        if new_cluster is not None:
+            _data['new_cluster'] = new_cluster
+            if not isinstance(new_cluster, dict):
+                raise TypeError('Expected databricks.NewCluster() or dict for field new_cluster')
+        if libraries is not None:
+            _data['libraries'] = libraries
+        if email_notifications is not None:
+            _data['email_notifications'] = email_notifications
+            if not isinstance(email_notifications, dict):
+                raise TypeError('Expected databricks.JobEmailNotifications() or dict for field email_notifications')
+        if timeout_seconds is not None:
+            _data['timeout_seconds'] = timeout_seconds
+        if max_retries is not None:
+            _data['max_retries'] = max_retries
+        if min_retry_interval_millis is not None:
+            _data['min_retry_interval_millis'] = min_retry_interval_millis
+        if retry_on_timeout is not None:
+            _data['retry_on_timeout'] = retry_on_timeout
+        if schedule is not None:
+            _data['schedule'] = schedule
+            if not isinstance(schedule, dict):
+                raise TypeError('Expected databricks.CronSchedule() or dict for field schedule')
+        if notebook_task is not None:
+            _data['notebook_task'] = notebook_task
+            if not isinstance(notebook_task, dict):
+                raise TypeError('Expected databricks.NotebookTask() or dict for field notebook_task')
+        if spark_jar_task is not None:
+            _data['spark_jar_task'] = spark_jar_task
+            if not isinstance(spark_jar_task, dict):
+                raise TypeError('Expected databricks.SparkJarTask() or dict for field spark_jar_task')
+        if spark_python_task is not None:
+            _data['spark_python_task'] = spark_python_task
+            if not isinstance(spark_python_task, dict):
+                raise TypeError('Expected databricks.SparkPythonTask() or dict for field spark_python_task')
+        if spark_submit_task is not None:
+            _data['spark_submit_task'] = spark_submit_task
+            if not isinstance(spark_submit_task, dict):
+                raise TypeError('Expected databricks.SparkSubmitTask() or dict for field spark_submit_task')
+        if max_concurrent_runs is not None:
+            _data['max_concurrent_runs'] = max_concurrent_runs
+        return self.client.perform_query_async('POST', '/jobs/create', data=_data, headers=headers)
+
+    @asyncio.coroutine
+    def submit_run(self, run_name=None, existing_cluster_id=None, new_cluster=None, libraries=None,
+                   notebook_task=None, spark_jar_task=None, spark_python_task=None,
+                   spark_submit_task=None, timeout_seconds=None, headers=None):
+        _data = {}
+        if run_name is not None:
+            _data['run_name'] = run_name
+        if existing_cluster_id is not None:
+            _data['existing_cluster_id'] = existing_cluster_id
+        if new_cluster is not None:
+            _data['new_cluster'] = new_cluster
+            if not isinstance(new_cluster, dict):
+                raise TypeError('Expected databricks.NewCluster() or dict for field new_cluster')
+        if libraries is not None:
+            _data['libraries'] = libraries
+        if notebook_task is not None:
+            _data['notebook_task'] = notebook_task
+            if not isinstance(notebook_task, dict):
+                raise TypeError('Expected databricks.NotebookTask() or dict for field notebook_task')
+        if spark_jar_task is not None:
+            _data['spark_jar_task'] = spark_jar_task
+            if not isinstance(spark_jar_task, dict):
+                raise TypeError('Expected databricks.SparkJarTask() or dict for field spark_jar_task')
+        if spark_python_task is not None:
+            _data['spark_python_task'] = spark_python_task
+            if not isinstance(spark_python_task, dict):
+                raise TypeError('Expected databricks.SparkPythonTask() or dict for field spark_python_task')
+        if spark_submit_task is not None:
+            _data['spark_submit_task'] = spark_submit_task
+            if not isinstance(spark_submit_task, dict):
+                raise TypeError('Expected databricks.SparkSubmitTask() or dict for field spark_submit_task')
+        if timeout_seconds is not None:
+            _data['timeout_seconds'] = timeout_seconds
+        return self.client.perform_query_async('POST', '/jobs/runs/submit', data=_data, headers=headers)
+
+    @asyncio.coroutine
+    def reset_job(self, job_id, new_settings, headers=None):
+        _data = {}
+        if job_id is not None:
+            _data['job_id'] = job_id
+        if new_settings is not None:
+            _data['new_settings'] = new_settings
+            if not isinstance(new_settings, dict):
+                raise TypeError('Expected databricks.JobSettings() or dict for field new_settings')
+        return self.client.perform_query_async('POST', '/jobs/reset', data=_data, headers=headers)
+
+    @asyncio.coroutine
+    def delete_job(self, job_id, headers=None):
+        _data = {}
+        if job_id is not None:
+            _data['job_id'] = job_id
+        return self.client.perform_query_async('POST', '/jobs/delete', data=_data, headers=headers)
+
+    @asyncio.coroutine
+    def get_job(self, job_id, headers=None):
+        _data = {}
+        if job_id is not None:
+            _data['job_id'] = job_id
+        return self.client.perform_query_async('GET', '/jobs/get', data=_data, headers=headers)
+
+    @asyncio.coroutine
+    def list_jobs(self, headers=None):
+        _data = {}
+
+        return self.client.perform_query_async('GET', '/jobs/list', data=_data, headers=headers)
+
+    @asyncio.coroutine
+    def run_now(self, job_id=None, jar_params=None, notebook_params=None, python_params=None,
+                spark_submit_params=None, headers=None):
+        _data = {}
+        if job_id is not None:
+            _data['job_id'] = job_id
+        if jar_params is not None:
+            _data['jar_params'] = jar_params
+        if notebook_params is not None:
+            _data['notebook_params'] = notebook_params
+        if python_params is not None:
+            _data['python_params'] = python_params
+        if spark_submit_params is not None:
+            _data['spark_submit_params'] = spark_submit_params
+        return self.client.perform_query_async('POST', '/jobs/run-now', data=_data, headers=headers)
+
+    @asyncio.coroutine
+    def list_runs(self, job_id=None, active_only=None, completed_only=None, offset=None,
+                  limit=None, headers=None):
+        _data = {}
+        if job_id is not None:
+            _data['job_id'] = job_id
+        if active_only is not None:
+            _data['active_only'] = active_only
+        if completed_only is not None:
+            _data['completed_only'] = completed_only
+        if offset is not None:
+            _data['offset'] = offset
+        if limit is not None:
+            _data['limit'] = limit
+        return self.client.perform_query_async('GET', '/jobs/runs/list', data=_data, headers=headers)
+
+    @asyncio.coroutine
+    def get_run(self, run_id=None, headers=None):
+        _data = {}
+        if run_id is not None:
+            _data['run_id'] = run_id
+        return self.client.perform_query_async('GET', '/jobs/runs/get', data=_data, headers=headers)
+
+    @asyncio.coroutine
+    def delete_run(self, run_id=None, headers=None):
+        _data = {}
+        if run_id is not None:
+            _data['run_id'] = run_id
+        return self.client.perform_query_async('POST', '/jobs/runs/delete', data=_data, headers=headers)
+
+    @asyncio.coroutine
+    def cancel_run(self, run_id, headers=None):
+        _data = {}
+        if run_id is not None:
+            _data['run_id'] = run_id
+        return self.client.perform_query_async('POST', '/jobs/runs/cancel', data=_data, headers=headers)
+
+    @asyncio.coroutine
+    def get_run_output(self, run_id, headers=None):
+        _data = {}
+        if run_id is not None:
+            _data['run_id'] = run_id
+        return self.client.perform_query_async('GET', '/jobs/runs/get-output', data=_data, headers=headers)
+
+    @asyncio.coroutine
+    def export_run(self, run_id, views_to_export=None, headers=None):
+        _data = {}
+        if run_id is not None:
+            _data['run_id'] = run_id
+        if views_to_export is not None:
+            _data['views_to_export'] = views_to_export
+        return self.client.perform_query_async('GET', '/jobs/runs/export', data=_data, headers=headers)
 
 
 class ClusterService(object):
